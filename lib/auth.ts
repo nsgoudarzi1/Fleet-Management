@@ -5,7 +5,6 @@ import NextAuth from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
-import { getAppConfig } from "@/lib/config";
 import { prisma } from "@/lib/db/prisma";
 import { logger } from "@/lib/logger";
 import { consumeRateLimit, requestIp } from "@/lib/services/rate-limit";
@@ -39,11 +38,22 @@ function pickCurrentMembership(jwt: JWT) {
   return memberships[0];
 }
 
-const appConfig = getAppConfig();
+function getAuthSecret() {
+  return process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET;
+}
+
+function getRateLimitConfig() {
+  const windowSeconds = Number(process.env.RATE_LIMIT_WINDOW_SECONDS ?? 60);
+  const authMax = Number(process.env.RATE_LIMIT_AUTH_MAX ?? 10);
+  return {
+    windowSeconds: Number.isFinite(windowSeconds) && windowSeconds > 0 ? windowSeconds : 60,
+    authMax: Number.isFinite(authMax) && authMax > 0 ? authMax : 10,
+  };
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  secret: appConfig.authSecret,
+  secret: getAuthSecret(),
   session: { strategy: "jwt" },
   trustHost: true,
   useSecureCookies: process.env.NODE_ENV === "production",
@@ -62,12 +72,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!parsed.success) return null;
         const { email, password } = parsed.data;
         const ip = request instanceof Request ? requestIp(request) : "unknown";
+        const rateLimitConfig = getRateLimitConfig();
         try {
           const rate = await consumeRateLimit({
             scope: "auth:sign-in",
             key: `${ip}:${email.toLowerCase()}`,
-            limit: appConfig.RATE_LIMIT_AUTH_MAX,
-            windowSeconds: appConfig.RATE_LIMIT_WINDOW_SECONDS,
+            limit: rateLimitConfig.authMax,
+            windowSeconds: rateLimitConfig.windowSeconds,
           });
           if (!rate.allowed) {
             logger.warn("Auth rate limit exceeded", { email, ip });
