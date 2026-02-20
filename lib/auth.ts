@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import NextAuth from "next-auth";
 import type { JWT } from "next-auth/jwt";
@@ -93,14 +93,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase() },
-          include: {
-            memberships: {
-              include: { org: true },
+        let user;
+        try {
+          user = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
+            include: {
+              memberships: {
+                include: { org: true },
+              },
             },
-          },
-        });
+          });
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021") {
+            logger.error("Auth failed because database schema is not initialized.", {
+              prismaCode: error.code,
+              prismaMeta: error.meta,
+              hint: "Run `prisma migrate deploy` against the same DATABASE_URL used at runtime.",
+            });
+          }
+          throw error;
+        }
         if (!user || !user.passwordHash) return null;
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
