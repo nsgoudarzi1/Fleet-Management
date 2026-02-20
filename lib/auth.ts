@@ -39,8 +39,11 @@ function pickCurrentMembership(jwt: JWT) {
   return memberships[0];
 }
 
+const appConfig = getAppConfig();
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  secret: appConfig.authSecret,
   session: { strategy: "jwt" },
   trustHost: true,
   useSecureCookies: process.env.NODE_ENV === "production",
@@ -58,7 +61,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = credentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
         const { email, password } = parsed.data;
-        const appConfig = getAppConfig();
         const ip = request instanceof Request ? requestIp(request) : "unknown";
         try {
           const rate = await consumeRateLimit({

@@ -14,6 +14,7 @@ const envSchema = z.object({
   IMPORT_STORAGE_MODE: z.enum(["s3", "r2", "supabase", "local"]).optional(),
   STORAGE_DOWNLOAD_MODE: z.enum(["auto", "signed", "proxy"]).default("auto"),
   NEXTAUTH_SECRET: z.string().min(16).optional(),
+  AUTH_SECRET: z.string().min(16).optional(),
   NEXTAUTH_URL: z.string().url().optional(),
   S3_ENDPOINT: z.string().url().optional().or(z.literal("")),
   S3_REGION: z.string().optional(),
@@ -54,12 +55,13 @@ function buildConfig() {
   const pdfMode = raw.PDF_MODE ?? (isProd ? "external" : "playwright");
   const storageMode = raw.STORAGE_MODE ?? (isProd ? "r2" : "local");
   const importStorageMode = raw.IMPORT_STORAGE_MODE ?? storageMode;
+  const authSecret = raw.NEXTAUTH_SECRET ?? raw.AUTH_SECRET;
   const errors: string[] = [];
 
   if (isProd) {
     if (!raw.DATABASE_URL) errors.push("DATABASE_URL is required in production.");
     if (!raw.DIRECT_URL) errors.push("DIRECT_URL is required in production for migrations.");
-    if (!raw.NEXTAUTH_SECRET) errors.push("NEXTAUTH_SECRET is required in production.");
+    if (!authSecret) errors.push("NEXTAUTH_SECRET or AUTH_SECRET is required in production.");
     if (!raw.NEXTAUTH_URL) errors.push("NEXTAUTH_URL is required in production.");
   }
   if (pdfMode === "external" && !raw.PDF_EXTERNAL_API_KEY) {
@@ -81,6 +83,7 @@ function buildConfig() {
     pdfMode,
     storageMode,
     importStorageMode,
+    authSecret,
     configWarnings: errors,
   };
 }
