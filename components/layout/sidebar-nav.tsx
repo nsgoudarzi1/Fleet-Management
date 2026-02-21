@@ -9,10 +9,13 @@ import {
   Calculator,
   CarFront,
   ClipboardList,
+  FileText,
   HandCoins,
   LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
+  TruckElectric,
+  UsersRound,
   Settings,
   Users,
   UserSquare2,
@@ -26,6 +29,10 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
   Inventory: CarFront,
   "Fixed Ops": Wrench,
+  Quotes: FileText,
+  Upfits: TruckElectric,
+  Reports: ClipboardList,
+  Fleet: UsersRound,
   Customers: Users,
   Leads: UserSquare2,
   Deals: ClipboardList,
@@ -52,11 +59,11 @@ export function SidebarNav() {
   const groups = useMemo(
     () => ({
       "Core Workflow": NAV_ITEMS.filter((item) =>
-        ["Dashboard", "Inventory", "Deals", "Customers", "Leads", "Funding", "Fixed Ops", "Accounting"].includes(
+        ["Dashboard", "Inventory", "Quotes", "Upfits", "Reports", "Deals", "Fleet", "Customers", "Leads", "Funding", "Fixed Ops", "Accounting"].includes(
           item.label,
         ),
       ).sort((a, b) => {
-        const order = ["Dashboard", "Inventory", "Deals", "Customers", "Leads", "Funding", "Fixed Ops", "Accounting"];
+        const order = ["Dashboard", "Inventory", "Quotes", "Upfits", "Reports", "Deals", "Fleet", "Customers", "Leads", "Funding", "Fixed Ops", "Accounting"];
         return order.indexOf(a.label) - order.indexOf(b.label);
       }),
       Administration: NAV_ITEMS.filter((item) => item.label === "Settings"),

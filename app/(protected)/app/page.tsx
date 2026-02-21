@@ -118,6 +118,17 @@ export default async function DashboardPage() {
             }))}
             emptyLabel="No overdue CRM tasks."
           />
+          <WorkQueue
+            title="Approval Queue"
+            items={data.pendingApprovals.map((approval) => ({
+              id: approval.id,
+              title: approval.quote?.quoteNumber ?? approval.entityType,
+              subtitle: `Requested by ${approval.requestedBy?.name ?? "Unknown"} • ${approval.delta}`,
+              href: approval.quoteId ? `/quotes/${approval.quoteId}` : "/quotes",
+              priority: "high",
+            }))}
+            emptyLabel="No pending discount approvals."
+          />
         </div>
       </section>
 

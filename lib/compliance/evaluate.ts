@@ -25,6 +25,7 @@ export type DealSnapshot = {
     vin: string;
     mileage: number;
     stockNumber: string;
+    gvwr?: number | null;
   };
   dealer: {
     name: string;
@@ -55,6 +56,8 @@ export type ComplianceEvaluation = {
 };
 
 function whenMatches(snapshot: DealSnapshot, when: ComplianceWhenClause) {
+  if (when.state && !when.state.includes(snapshot.jurisdiction.toUpperCase())) return false;
+  if (when.saleType && !when.saleType.includes(snapshot.dealType)) return false;
   if (when.dealType && !when.dealType.includes(snapshot.dealType)) return false;
   if (typeof when.hasTradeIn === "boolean" && when.hasTradeIn !== snapshot.hasTradeIn) return false;
   if (typeof when.isOutOfStateBuyer === "boolean") {
@@ -63,6 +66,9 @@ function whenMatches(snapshot: DealSnapshot, when: ComplianceWhenClause) {
   }
   if (typeof when.isFinanced === "boolean" && when.isFinanced !== snapshot.isFinanced) return false;
   if (typeof when.hasLienholder === "boolean" && when.hasLienholder !== snapshot.hasLienholder) return false;
+  const gvwr = snapshot.vehicle.gvwr ?? null;
+  if (typeof when.minGvwr === "number" && (gvwr === null || gvwr < when.minGvwr)) return false;
+  if (typeof when.maxGvwr === "number" && (gvwr === null || gvwr > when.maxGvwr)) return false;
   return true;
 }
 

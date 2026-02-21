@@ -3,11 +3,15 @@ import { z } from "zod";
 
 const whenClauseSchema = z
   .object({
+    state: z.array(z.string().trim().length(2).transform((value) => value.toUpperCase())).optional(),
+    saleType: z.array(z.nativeEnum(DealType)).optional(),
     dealType: z.array(z.nativeEnum(DealType)).optional(),
     hasTradeIn: z.boolean().optional(),
     isOutOfStateBuyer: z.boolean().optional(),
     isFinanced: z.boolean().optional(),
     hasLienholder: z.boolean().optional(),
+    minGvwr: z.coerce.number().int().positive().optional(),
+    maxGvwr: z.coerce.number().int().positive().optional(),
   })
   .partial();
 

@@ -4,6 +4,7 @@ import { recordAudit } from "@/lib/services/audit";
 import { postDealDelivery } from "@/lib/services/accounting";
 import { AppError, requireOrgContext } from "@/lib/services/guard";
 import { emitWebhookEvent } from "@/lib/services/integrations";
+import { snapshotAsSoldSpec } from "@/lib/services/inventory";
 import { calcMonthlyPayment } from "@/lib/utils";
 import {
   dealChecklistSchema,
@@ -87,6 +88,15 @@ export async function getDealDetail(dealId: string) {
           stips: { orderBy: { createdAt: "asc" } },
           createdBy: true,
         },
+      },
+      upfitJobs: {
+        include: {
+          vendor: true,
+          milestones: {
+            orderBy: { createdAt: "asc" },
+          },
+        },
+        orderBy: { createdAt: "desc" },
       },
       activities: { orderBy: { createdAt: "desc" } },
       documents: {
@@ -265,6 +275,7 @@ export async function transitionDealStage(input: unknown) {
   });
 
   if (parsed.stage === DealStage.DELIVERED) {
+    await snapshotAsSoldSpec({ dealId: parsed.dealId });
     await postDealDelivery({
       orgId: ctx.orgId,
       dealId: parsed.dealId,

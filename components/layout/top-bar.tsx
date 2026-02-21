@@ -92,7 +92,13 @@ function QuickCreateMenu() {
           <Link href="/deals/new">Create Deal</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link href="/quotes">Create Quote</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/crm/leads?create=1">Add Lead</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/operations/upfits">Create Upfit Job</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/fixedops/appointments">Service Appointment</Link>

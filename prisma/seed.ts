@@ -25,6 +25,8 @@ import {
   ApiKeyScope,
   FundingCaseStatus,
   PermissionScope,
+  QuoteStatus,
+  UpfitJobStatus,
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { createHash } from "node:crypto";
@@ -221,6 +223,18 @@ async function main() {
     where: { orgId: org.id },
     data: { customRoleId: null },
   });
+  await prisma.dealDocumentChecklistItem.deleteMany({ where: { orgId: org.id } });
+  await prisma.documentPackTemplateItem.deleteMany({ where: { orgId: org.id } });
+  await prisma.documentPackTemplate.deleteMany({ where: { orgId: org.id } });
+  await prisma.upfitMilestone.deleteMany({ where: { orgId: org.id } });
+  await prisma.upfitJob.deleteMany({ where: { orgId: org.id } });
+  await prisma.discountApprovalRequest.deleteMany({ where: { orgId: org.id } });
+  await prisma.quoteLine.deleteMany({ where: { orgId: org.id } });
+  await prisma.quote.deleteMany({ where: { orgId: org.id } });
+  await prisma.fleetAccountCustomer.deleteMany({ where: { orgId: org.id } });
+  await prisma.fleetAccount.deleteMany({ where: { orgId: org.id } });
+  await prisma.entityAttachment.deleteMany({ where: { orgId: org.id } });
+  await prisma.vehicleSpec.deleteMany({ where: { orgId: org.id } });
   await prisma.rolePermission.deleteMany({ where: { orgId: org.id } });
   await prisma.orgRole.deleteMany({ where: { orgId: org.id } });
   await prisma.fundingStip.deleteMany({ where: { orgId: org.id } });
@@ -595,6 +609,49 @@ async function main() {
     },
   });
 
+  await prisma.vehicleSpec.createMany({
+    data: [
+      {
+        orgId: org.id,
+        vehicleId: vehicle1.id,
+        version: "AS_LISTED",
+        source: "MANUAL",
+        gvwr: 14000,
+        gawrFront: 6000,
+        gawrRear: 9900,
+        axleConfig: "4x2",
+        wheelbaseIn: 170,
+        bodyType: "Flatbed",
+        boxLengthIn: 120,
+        cabType: "Crew Cab",
+        engine: "6.7L Turbo Diesel",
+        transmission: "10-speed automatic",
+        fuelType: "Diesel",
+        ptoCapable: true,
+        hitchRating: "15,000 lb",
+        notes: "Commercial package with towing prep.",
+        createdById: manager.id,
+      },
+      {
+        orgId: org.id,
+        vehicleId: vehicle2.id,
+        version: "AS_LISTED",
+        source: "MANUAL",
+        gvwr: 4800,
+        axleConfig: "RWD",
+        wheelbaseIn: 112.2,
+        bodyType: "Sedan",
+        cabType: "4-door",
+        engine: "2.0L I4 Turbo",
+        transmission: "8-speed automatic",
+        fuelType: "Gas",
+        ptoCapable: false,
+        notes: "Retail passenger unit.",
+        createdById: manager.id,
+      },
+    ],
+  });
+
   const customer = await prisma.customer.create({
     data: {
       orgId: org.id,
@@ -780,6 +837,186 @@ async function main() {
     ],
   });
 
+  const fleetAccount = await prisma.fleetAccount.create({
+    data: {
+      orgId: org.id,
+      name: "Summit Utility Fleet",
+      billingTerms: "Net 30",
+      taxExempt: true,
+      notes: "Municipal fleet program demo account.",
+      locationsJson: ["Austin HQ", "Round Rock Yard"],
+      memberships: {
+        create: [
+          {
+            orgId: org.id,
+            customerId: customer.id,
+          },
+        ],
+      },
+    },
+  });
+
+  const quote = await prisma.quote.create({
+    data: {
+      orgId: org.id,
+      quoteNumber: "Q-2026-0001",
+      status: QuoteStatus.SENT,
+      customerId: customer.id,
+      fleetAccountId: fleetAccount.id,
+      dealId: deal.id,
+      createdById: sales.id,
+      sentAt: new Date(),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
+      notes: "Two-unit fleet quote with upfit allowance.",
+    },
+  });
+
+  await prisma.quoteLine.createMany({
+    data: [
+      {
+        orgId: org.id,
+        quoteId: quote.id,
+        vehicleId: vehicle1.id,
+        description: `${vehicle1.year} ${vehicle1.make} ${vehicle1.model}`,
+        quantity: 1,
+        unitPrice: 34995,
+        taxable: true,
+        unitCost: 30000,
+        lineSubtotal: 34995,
+        lineTax: 2624.63,
+        lineTotal: 37619.63,
+        lineCost: 30000,
+        lineGross: 4995,
+      },
+      {
+        orgId: org.id,
+        quoteId: quote.id,
+        vehicleId: vehicle2.id,
+        description: `${vehicle2.year} ${vehicle2.make} ${vehicle2.model}`,
+        quantity: 1,
+        unitPrice: 28995,
+        taxable: true,
+        unitCost: 23500,
+        lineSubtotal: 28995,
+        lineTax: 2174.63,
+        lineTotal: 31169.63,
+        lineCost: 23500,
+        lineGross: 5495,
+      },
+    ],
+  });
+
+  await prisma.quote.update({
+    where: { id: quote.id },
+    data: {
+      subtotal: 63990,
+      taxableTotal: 63990,
+      taxTotal: 4799.26,
+      total: 68789.26,
+      costTotal: 53500,
+      grossTotal: 10490,
+    },
+  });
+
+  await prisma.discountApprovalRequest.create({
+    data: {
+      orgId: org.id,
+      entityType: "Quote",
+      entityId: quote.id,
+      quoteId: quote.id,
+      requestedById: sales.id,
+      reason: "Fleet volume discount above manager threshold.",
+      delta: -2500,
+      status: "PENDING",
+    },
+  });
+
+  await prisma.upfitJob.create({
+    data: {
+      orgId: org.id,
+      vehicleId: vehicle1.id,
+      dealId: deal.id,
+      quoteId: quote.id,
+      vendorId: null,
+      status: UpfitJobStatus.IN_PROGRESS,
+      eta: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5),
+      internalNotes: "Install ladder rack and warning light package.",
+      customerNotes: "Coordinate pickup after final QC.",
+      costEstimate: 3200,
+      actualCost: 1800,
+      billableToCustomer: true,
+      includeActualCosts: false,
+      createdById: service.id,
+      milestones: {
+        create: [
+          {
+            orgId: org.id,
+            name: "Parts ordered",
+            completedAt: new Date(),
+            completedById: service.id,
+          },
+          {
+            orgId: org.id,
+            name: "Install complete",
+          },
+          {
+            orgId: org.id,
+            name: "Final inspection",
+          },
+        ],
+      },
+    },
+  });
+
+  const docPack = await prisma.documentPackTemplate.create({
+    data: {
+      orgId: org.id,
+      name: "TX Finance Retail Pack",
+      state: "TX",
+      saleType: DealType.FINANCE,
+      rulesJson: {
+        minGvwrPrompt: true,
+      },
+      items: {
+        create: [
+          {
+            orgId: org.id,
+            documentType: DocumentType.BUYERS_ORDER,
+            required: true,
+            blocking: true,
+            sortOrder: 1,
+          },
+          {
+            orgId: org.id,
+            documentType: DocumentType.ODOMETER_DISCLOSURE,
+            required: true,
+            blocking: true,
+            sortOrder: 2,
+          },
+          {
+            orgId: org.id,
+            documentType: DocumentType.RETAIL_INSTALLMENT_CONTRACT,
+            required: true,
+            blocking: true,
+            sortOrder: 3,
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.dealDocumentChecklistItem.create({
+    data: {
+      orgId: org.id,
+      dealId: deal.id,
+      packTemplateId: docPack.id,
+      documentType: DocumentType.BUYERS_ORDER,
+      required: true,
+      status: "PENDING",
+      blocking: true,
+    },
+  });
+
   await prisma.activityLog.createMany({
     data: [
       {
@@ -835,6 +1072,26 @@ async function main() {
           status: ["AWAITING_APPROVAL"],
           sort: "approvalRequestedAt",
           direction: "asc",
+        },
+      },
+      {
+        orgId: org.id,
+        userId: sales.id,
+        entityKey: "quotes",
+        name: "Fleet Quotes Pending",
+        filterJson: {
+          status: ["DRAFT", "SENT"],
+          sort: "createdAt",
+          direction: "asc",
+        },
+      },
+      {
+        orgId: org.id,
+        userId: service.id,
+        entityKey: "upfits",
+        name: "Active Upfit Queue",
+        filterJson: {
+          status: ["PLANNED", "IN_PROGRESS", "WAITING_PARTS"],
         },
       },
     ],

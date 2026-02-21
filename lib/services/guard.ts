@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ROLE_RANK } from "@/lib/constants";
 import { prisma } from "@/lib/db/prisma";
+import { scopedOrgWhere } from "@/lib/services/org-scope";
 import { mergeEffectivePermissions } from "@/lib/services/permissions";
 
 export class AppError extends Error {
@@ -100,12 +101,4 @@ export async function requirePerm(scope: PermissionScope) {
   return ctx;
 }
 
-export function scopedOrgWhere<T extends { orgId?: string }>(
-  where: T | undefined,
-  orgId: string,
-): T & { orgId: string } {
-  return {
-    ...(where ?? ({} as T)),
-    orgId,
-  };
-}
+export { scopedOrgWhere };

@@ -18,7 +18,11 @@ type SearchItem = {
 const QUICK_ACTIONS = [
   { label: "Receive Vehicle", href: "/inventory?create=1" },
   { label: "Create Deal", href: "/deals/new" },
+  { label: "Create Quote", href: "/quotes" },
+  { label: "Open Fleet Accounts", href: "/crm/fleet" },
   { label: "Add Lead", href: "/crm/leads?create=1" },
+  { label: "Create Upfit Job", href: "/operations/upfits" },
+  { label: "View Ops Reports", href: "/reports" },
   { label: "Create Repair Order", href: "/fixedops/repair-orders" },
   { label: "New Service Appointment", href: "/fixedops/appointments" },
   { label: "Add Recon Task", href: "/inventory?recon=1" },

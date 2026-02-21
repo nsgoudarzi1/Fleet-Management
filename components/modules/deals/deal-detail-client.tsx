@@ -111,6 +111,18 @@ type DealDetail = {
     }>;
   } | null;
   activities: Array<{ id: string; message: string; createdAt: string | Date; type: string }>;
+  upfitJobs: Array<{
+    id: string;
+    status: string;
+    costEstimate: string | number;
+    actualCost: string | number;
+    vendor: { name: string } | null;
+    milestones: Array<{
+      id: string;
+      name: string;
+      completedAt: string | Date | null;
+    }>;
+  }>;
 };
 
 const DEAL_STAGES = ["DRAFT", "SUBMITTED", "APPROVED", "CONTRACTED", "DELIVERED"];
@@ -140,6 +152,9 @@ export function DealDetailClient({
   const [dealerSignerEmail, setDealerSignerEmail] = useState("");
   const [voidingEnvelopeId, setVoidingEnvelopeId] = useState<string | null>(null);
   const [completingEnvelopeId, setCompletingEnvelopeId] = useState<string | null>(null);
+  const [creatingUpfit, setCreatingUpfit] = useState(false);
+  const [generatingPack, setGeneratingPack] = useState(false);
+  const [packTemplateId, setPackTemplateId] = useState("");
 
   const updateStage = async (stage: string) => {
     setUpdatingStage(true);
@@ -407,6 +422,86 @@ export function DealDetailClient({
     window.location.reload();
   };
 
+  const createUpfitJob = async (formData: FormData) => {
+    setCreatingUpfit(true);
+    const response = await fetch("/api/upfits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dealId: deal.id,
+        vehicleId: deal.vehicle.id,
+        vendorId: String(formData.get("vendorId") ?? "") || undefined,
+        eta: formData.get("eta") ? new Date(String(formData.get("eta"))).toISOString() : undefined,
+        costEstimate: Number(formData.get("costEstimate") ?? 0),
+        actualCost: Number(formData.get("actualCost") ?? 0),
+        includeActualCosts: formData.get("includeActualCosts") === "on",
+        billableToCustomer: formData.get("billableToCustomer") === "on",
+        internalNotes: String(formData.get("internalNotes") ?? ""),
+        milestones: String(formData.get("milestones") ?? "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .map((name) => ({ name })),
+      }),
+    });
+    setCreatingUpfit(false);
+    if (!response.ok) {
+      toast.error("Unable to create upfit job.");
+      return;
+    }
+    toast.success("Upfit job created.");
+    window.location.reload();
+  };
+
+  const updateUpfitStatus = async (jobId: string, status: string) => {
+    const response = await fetch("/api/upfits/status", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobId, status }),
+    });
+    if (!response.ok) {
+      toast.error("Unable to update upfit status.");
+      return;
+    }
+    window.location.reload();
+  };
+
+  const completeUpfitMilestone = async (milestoneId: string) => {
+    const response = await fetch("/api/upfits/milestones/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ milestoneId }),
+    });
+    if (!response.ok) {
+      toast.error("Unable to complete milestone.");
+      return;
+    }
+    window.location.reload();
+  };
+
+  const generateDocumentPack = async () => {
+    if (!packTemplateId.trim()) {
+      toast.error("Enter a document pack template ID.");
+      return;
+    }
+    setGeneratingPack(true);
+    const response = await fetch("/api/document-packs/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dealId: deal.id,
+        packTemplateId: packTemplateId.trim(),
+      }),
+    });
+    setGeneratingPack(false);
+    if (!response.ok) {
+      toast.error("Unable to generate document pack.");
+      return;
+    }
+    toast.success("Document pack generated.");
+    window.location.reload();
+  };
+
   const checklistByDocType = useMemo(
     () => new Map(documentsWorkspace.checklist.map((item) => [item.docType, item])),
     [documentsWorkspace.checklist],
@@ -439,6 +534,7 @@ export function DealDetailClient({
               <TabsTrigger value="numbers">Deal Numbers</TabsTrigger>
               <TabsTrigger value="trade">Trade-In</TabsTrigger>
               <TabsTrigger value="funding">Funding</TabsTrigger>
+              <TabsTrigger value="upfits">Upfits</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
             <TabsContent value="numbers" className="space-y-4">
@@ -641,6 +737,82 @@ export function DealDetailClient({
                 </Card>
               </div>
             </TabsContent>
+            <TabsContent value="upfits" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add Upfit Job</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form action={createUpfitJob} className="grid gap-2 sm:grid-cols-2">
+                    <Input name="vendorId" placeholder="Vendor ID (optional)" />
+                    <Input name="eta" type="datetime-local" />
+                    <Input name="costEstimate" type="number" placeholder="Estimate" defaultValue={0} />
+                    <Input name="actualCost" type="number" placeholder="Actual Cost" defaultValue={0} />
+                    <Input name="milestones" placeholder="Milestones (comma separated)" className="sm:col-span-2" />
+                    <Textarea name="internalNotes" placeholder="Internal notes" className="sm:col-span-2" />
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox name="billableToCustomer" defaultChecked />
+                      Billable to customer
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox name="includeActualCosts" />
+                      Roll up actual cost
+                    </label>
+                    <div className="sm:col-span-2 flex justify-end">
+                      <Button type="submit" disabled={creatingUpfit}>
+                        {creatingUpfit ? "Saving..." : "Create Upfit Job"}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upfit Timeline</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {deal.upfitJobs.length === 0 ? <p className="text-sm text-slate-500">No upfit jobs linked to this deal.</p> : null}
+                  {deal.upfitJobs.map((job) => (
+                    <div key={job.id} className="rounded border border-slate-200 p-3 text-sm">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium text-slate-900">{job.vendor?.name ?? "Unassigned vendor"}</p>
+                          <p className="text-xs text-slate-500">
+                            Estimate {formatCurrency(job.costEstimate)} â€¢ Actual {formatCurrency(job.actualCost)}
+                          </p>
+                        </div>
+                        <select
+                          defaultValue={job.status}
+                          className="h-8 rounded border border-slate-300 bg-white px-2 text-xs"
+                          onChange={(event) => void updateUpfitStatus(job.id, event.target.value)}
+                        >
+                          <option value="PLANNED">Planned</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="WAITING_PARTS">Waiting Parts</option>
+                          <option value="COMPLETED">Completed</option>
+                          <option value="CANCELED">Canceled</option>
+                        </select>
+                      </div>
+                      <div className="mt-2 space-y-1">
+                        {job.milestones.map((milestone) => (
+                          <div key={milestone.id} className="flex items-center justify-between rounded border border-slate-100 px-2 py-1">
+                            <p className="text-xs text-slate-700">{milestone.name}</p>
+                            {milestone.completedAt ? (
+                              <Badge variant="success">Done</Badge>
+                            ) : (
+                              <Button variant="outline" size="sm" onClick={() => void completeUpfitMilestone(milestone.id)}>
+                                Complete
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        {job.milestones.length === 0 ? <p className="text-xs text-slate-500">No milestones defined.</p> : null}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
             <TabsContent value="documents" className="space-y-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
@@ -729,6 +901,24 @@ export function DealDetailClient({
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-sm font-medium text-slate-900">Document Pack</p>
+                    <p className="mb-2 text-xs text-slate-500">
+                      Generate checklist + documents from a state/deal-type pack template.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Input
+                        value={packTemplateId}
+                        onChange={(event) => setPackTemplateId(event.target.value)}
+                        placeholder="Pack template ID"
+                        className="max-w-sm"
+                      />
+                      <Button variant="outline" onClick={() => void generateDocumentPack()} disabled={generatingPack}>
+                        {generatingPack ? "Generating..." : "Generate Pack"}
+                      </Button>
+                    </div>
+                  </div>
+
                   {documentsWorkspace.notices.map((notice, index) => (
                     <div key={`notice-${index}`} className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                       {notice}

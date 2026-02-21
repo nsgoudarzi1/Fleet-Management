@@ -25,6 +25,7 @@ export async function getDashboardData() {
     reconAging,
     leadResponseTimes,
     overdueTasks,
+    pendingApprovals,
   ] = await Promise.all([
     prisma.lead.findMany({
       where: {
@@ -152,6 +153,18 @@ export async function getDashboardData() {
       orderBy: { dueAt: "asc" },
       take: 10,
     }),
+    prisma.discountApprovalRequest.findMany({
+      where: {
+        orgId: ctx.orgId,
+        status: "PENDING",
+      },
+      include: {
+        quote: true,
+        requestedBy: true,
+      },
+      orderBy: { createdAt: "asc" },
+      take: 8,
+    }),
   ]);
 
   const unitsByDay = kpiUnits.reduce<Record<string, number>>((acc, row) => {
@@ -180,6 +193,7 @@ export async function getDashboardData() {
     dealsInProgress,
     fundingPending,
     overdueTasks,
+    pendingApprovals,
     inventoryAlerts,
     kpis: {
       units30: kpiGross.length,

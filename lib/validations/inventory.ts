@@ -1,4 +1,4 @@
-import { ReconTaskStatus, VehicleStatus } from "@prisma/client";
+import { ReconTaskStatus, SpecSource, SpecVersion, VehicleStatus } from "@prisma/client";
 import { z } from "zod";
 import { optionalString, positiveMoneySchema } from "@/lib/validations/common";
 
@@ -44,4 +44,62 @@ export const reconLineItemSchema = z.object({
   description: z.string().trim().min(1).max(120),
   quantity: z.coerce.number().min(0),
   unitCost: positiveMoneySchema,
+});
+
+const optionalNumber = z
+  .union([z.number(), z.string(), z.null(), z.undefined()])
+  .transform((value) => {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return undefined;
+      return Number(trimmed);
+    }
+    return value;
+  })
+  .refine((value) => value === undefined || Number.isFinite(value), "Must be a valid number.");
+
+export const vehicleSpecUpsertSchema = z.object({
+  source: z.nativeEnum(SpecSource).default(SpecSource.MANUAL),
+  version: z.nativeEnum(SpecVersion).default(SpecVersion.AS_LISTED),
+  gvwr: optionalNumber,
+  gawrFront: optionalNumber,
+  gawrRear: optionalNumber,
+  axleConfig: optionalString,
+  wheelbaseIn: optionalNumber,
+  bodyType: optionalString,
+  boxLengthIn: optionalNumber,
+  cabType: optionalString,
+  engine: optionalString,
+  transmission: optionalString,
+  fuelType: optionalString,
+  ptoCapable: z.coerce.boolean().optional(),
+  hitchRating: optionalString,
+  notes: optionalString,
+});
+
+export const vehicleSpecSnapshotSchema = z.object({
+  dealId: z.string().cuid(),
+});
+
+export const vehicleAttachmentsListSchema = z.object({
+  q: z.string().trim().min(1).max(120).optional(),
+  tag: z.string().trim().min(1).max(40).optional(),
+});
+
+export const vehicleAttachmentCreateSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+  contentType: z.string().trim().min(1).max(120),
+  size: z.coerce.number().int().min(1).max(20 * 1024 * 1024),
+  dataBase64: z.string().trim().min(4),
+  tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
+});
+
+export const vehicleAttachmentDeleteSchema = z.object({
+  attachmentId: z.string().cuid(),
+});
+
+export const vehicleSpecSheetQuerySchema = z.object({
+  version: z.nativeEnum(SpecVersion).default(SpecVersion.AS_LISTED),
+  dealId: z.string().cuid().optional(),
 });

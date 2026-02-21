@@ -6,7 +6,11 @@ import { AppError } from "@/lib/services/guard";
 export type DealContext = Prisma.DealGetPayload<{
   include: {
     customer: true;
-    vehicle: true;
+    vehicle: {
+      include: {
+        specs: true;
+      };
+    };
     tradeIns: true;
     org: true;
     documents: {
@@ -30,7 +34,15 @@ export async function loadDealContextBase(orgId: string, dealId: string) {
     where: { id: dealId, orgId },
     include: {
       customer: true,
-      vehicle: true,
+      vehicle: {
+        include: {
+          specs: {
+            where: { version: "AS_LISTED", dealId: null },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
+      },
       tradeIns: true,
       org: true,
       documents: {
@@ -77,6 +89,7 @@ export function buildDealSnapshotFromContext(deal: DealContext): DealSnapshot {
       vin: deal.vehicle.vin,
       mileage: deal.vehicle.mileage,
       stockNumber: deal.vehicle.stockNumber,
+      gvwr: deal.vehicle.specs[0]?.gvwr ?? null,
     },
     dealer: {
       name: deal.org.name,
@@ -132,6 +145,7 @@ export function buildTemplateContextFromDeal(deal: DealContext) {
       vin: deal.vehicle.vin,
       mileage: deal.vehicle.mileage,
       stockNumber: deal.vehicle.stockNumber,
+      gvwr: deal.vehicle.specs[0]?.gvwr ?? null,
     },
     tradeIn: trade
       ? {
