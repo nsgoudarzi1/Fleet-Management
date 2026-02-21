@@ -29,7 +29,7 @@ async function verifyRuntimeSchema() {
   }
 }
 
-const runMigrations = process.env.VERCEL === "1" || process.env.RUN_DB_MIGRATIONS === "true";
+const runMigrations = process.env.RUN_DB_MIGRATIONS === "true";
 
 async function main() {
   if (runMigrations) {
@@ -54,6 +54,8 @@ async function main() {
 
     console.log("[build] Verifying runtime schema on DATABASE_URL...");
     await verifyRuntimeSchema();
+  } else {
+    console.log("[build] Skipping prisma migrate deploy (set RUN_DB_MIGRATIONS=true to enable).");
   }
 
   console.log("[build] Running next build...");
