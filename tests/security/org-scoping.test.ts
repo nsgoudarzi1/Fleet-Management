@@ -3,7 +3,7 @@ import { scopedOrgWhere } from "@/lib/services/org-scope";
 
 describe("org scoping helpers", () => {
   it("always injects orgId into where clauses", () => {
-    const where = scopedOrgWhere({ id: "veh_1" }, "org_abc");
+    const where = scopedOrgWhere<{ id: string; orgId?: string }>({ id: "veh_1" }, "org_abc");
     expect(where).toEqual({
       id: "veh_1",
       orgId: "org_abc",
