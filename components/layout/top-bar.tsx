@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, ChevronDown, LogOut, Plus, Search } from "lucide-react";
+import { ChevronDown, LogOut, Plus } from "lucide-react";
 import { signOut } from "@/lib/auth";
 import { DensityToggle } from "@/components/layout/density-toggle";
 import { CommandPalette } from "@/components/search/command-palette";
@@ -35,12 +35,6 @@ export function TopBar({ userName, role, orgName }: TopBarProps) {
           <OrgSwitcher orgName={orgName} />
           <DensityToggle />
           <QuickCreateMenu />
-          <Button size="icon" variant="ghost" aria-label="Search">
-            <Search className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="ghost" aria-label="Notifications">
-            <Bell className="h-4 w-4" />
-          </Button>
           <Separator orientation="vertical" className="mx-1 h-6" />
           <UserMenu userName={userName} role={role} logout={logout} />
         </div>
@@ -85,20 +79,20 @@ function QuickCreateMenu() {
       <DropdownMenuTrigger asChild>
         <Button size="sm">
           <Plus className="mr-2 h-4 w-4" />
-          Create
+          New
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+        <DropdownMenuLabel>Common Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/inventory?create=1">Receive Vehicle</Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/deals/new">Create Deal</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/crm/leads?create=1">Add Lead</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/inventory?create=1">Receive Vehicle</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/fixedops/appointments">Service Appointment</Link>
@@ -109,6 +103,14 @@ function QuickCreateMenu() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+function formatRole(role: string) {
+  return role
+    .toLowerCase()
+    .split("_")
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(" ");
 }
 
 function UserMenu({
@@ -129,7 +131,7 @@ function UserMenu({
           </span>
           <span className="hidden text-left sm:block">
             <span className="block text-sm font-medium text-foreground">{userName}</span>
-            <span className="block text-[11px] text-muted-foreground">{role}</span>
+            <span className="block text-[11px] text-muted-foreground">{formatRole(role)}</span>
           </span>
           <ChevronDown className="hidden h-4 w-4 text-muted-foreground sm:block" />
         </Button>

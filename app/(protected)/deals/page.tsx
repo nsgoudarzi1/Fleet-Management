@@ -27,8 +27,9 @@ export default async function DealsPage({
   return (
     <div>
       <PageHeader
-        title="Deals"
-        description="Desking-lite workflows with stage control."
+        title="Deals Pipeline"
+        description="Manage every deal from draft through delivery with clear stage ownership."
+        badges={["Primary Workflow"]}
         actions={
           <Button asChild>
             <Link href="/deals/new">
@@ -39,25 +40,28 @@ export default async function DealsPage({
         }
       />
       <section className="mb-3 rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
-        <form className="grid gap-2 sm:grid-cols-[1fr_220px_auto]">
-          <Input defaultValue={query} name="q" placeholder="Search deal #, customer, stock" />
+        <form className="grid gap-2 sm:grid-cols-[1fr_220px_auto_auto]">
+          <Input defaultValue={query} name="q" placeholder="Search deal #, customer, stock #" />
           <select name="stage" defaultValue={stage ?? ""} className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm">
             <option value="">All stages</option>
-            <option value="DRAFT">DRAFT</option>
-            <option value="SUBMITTED">SUBMITTED</option>
-            <option value="APPROVED">APPROVED</option>
-            <option value="CONTRACTED">CONTRACTED</option>
-            <option value="DELIVERED">DELIVERED</option>
+            <option value="DRAFT">Draft</option>
+            <option value="SUBMITTED">Submitted</option>
+            <option value="APPROVED">Approved</option>
+            <option value="CONTRACTED">Contracted</option>
+            <option value="DELIVERED">Delivered</option>
           </select>
           <Button type="submit" variant="outline">
-            Apply
+            Filter Results
+          </Button>
+          <Button asChild type="button" variant="ghost">
+            <Link href="/deals">Reset</Link>
           </Button>
         </form>
       </section>
       <DealsListClient rows={data.items as never[]} />
       <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
         <p className="text-slate-500">
-          Page {data.page} of {totalPages} • {data.total} total deals
+          Page {data.page} of {totalPages} | {data.total} total deals
         </p>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="sm" disabled={data.page <= 1}>
@@ -79,3 +83,4 @@ export default async function DealsPage({
     </div>
   );
 }
+

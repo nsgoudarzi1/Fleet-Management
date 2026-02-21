@@ -33,13 +33,25 @@ const runMigrations = process.env.VERCEL === "1" || process.env.RUN_DB_MIGRATION
 
 async function main() {
   if (runMigrations) {
-    if (!process.env.DATABASE_URL || !process.env.DIRECT_URL) {
-      console.error("[build] DATABASE_URL and DIRECT_URL are required to run prisma migrate deploy.");
+    if (!process.env.DATABASE_URL) {
+      console.error("[build] DATABASE_URL is required to run prisma migrate deploy.");
       process.exit(1);
     }
 
+    if (!process.env.DIRECT_URL) {
+      process.env.DIRECT_URL = process.env.DATABASE_URL;
+      console.warn("[build] DIRECT_URL is missing; using DATABASE_URL as fallback for migrations.");
+    }
+
     console.log("[build] Running prisma migrate deploy...");
-    run("npx prisma migrate deploy");
+    try {
+      run("npx prisma migrate deploy");
+    } catch (error) {
+      console.error("[build] prisma migrate deploy failed.");
+      console.error("[build] Verify DATABASE_URL/DIRECT_URL point to the same reachable Postgres database.");
+      throw error;
+    }
+
     console.log("[build] Verifying runtime schema on DATABASE_URL...");
     await verifyRuntimeSchema();
   }

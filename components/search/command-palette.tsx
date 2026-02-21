@@ -16,9 +16,9 @@ type SearchItem = {
 };
 
 const QUICK_ACTIONS = [
+  { label: "Receive Vehicle", href: "/inventory?create=1" },
   { label: "Create Deal", href: "/deals/new" },
   { label: "Add Lead", href: "/crm/leads?create=1" },
-  { label: "Receive Vehicle", href: "/inventory?create=1" },
   { label: "Create Repair Order", href: "/fixedops/repair-orders" },
   { label: "New Service Appointment", href: "/fixedops/appointments" },
   { label: "Add Recon Task", href: "/inventory?recon=1" },
@@ -84,9 +84,9 @@ export function CommandPalette() {
       <Button variant="outline" className="w-full justify-between text-muted-foreground sm:max-w-md" onClick={() => setOpen(true)}>
         <span className="inline-flex items-center gap-2">
           <Search className="h-4 w-4" />
-          Search customers, VIN, deal #
+          Search inventory, customers, and deals
         </span>
-        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px]">Ctrl K</span>
+        <span className="rounded border border-border bg-muted px-1.5 py-0.5 text-[11px]">Ctrl+K</span>
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="overflow-hidden p-0">
@@ -96,7 +96,7 @@ export function CommandPalette() {
               <Command.Input
                 value={query}
                 onValueChange={setQuery}
-                placeholder="Search across customers, vehicles, deals, invoices..."
+                placeholder="Search VIN, stock #, customer, deal #..."
                 className="flex h-11 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>

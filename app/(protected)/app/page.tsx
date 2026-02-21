@@ -21,8 +21,9 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Work Queue"
-        description="Role-aware queue focused on one-click next actions."
+        title="Sales & Inventory Work Queue"
+        description="Prioritized daily actions to move inventory into funded, delivered deals."
+        badges={["Inventory", "Deals", "Funding"]}
         actions={
           <>
             <Button asChild variant="outline">
@@ -73,10 +74,10 @@ export default async function DashboardPage() {
         </Card>
         <div className="grid gap-3">
           <WorkQueue
-            title="Service Waiting Approvals"
+            title="Service Approvals Queue"
             items={data.serviceApprovals.map((ro) => ({
               id: ro.id,
-              title: `${ro.roNumber} • ${ro.customer.firstName} ${ro.customer.lastName}`,
+              title: `${ro.roNumber} - ${ro.customer.firstName} ${ro.customer.lastName}`,
               subtitle: `${ro.vehicle.year} ${ro.vehicle.make} ${ro.vehicle.model}`,
               href: `/fixedops/repair-orders/${ro.id}`,
               priority: "high",
@@ -98,7 +99,7 @@ export default async function DashboardPage() {
             title="Funding Queue"
             items={data.fundingPending.map((deal) => ({
               id: deal.id,
-              title: `${deal.dealNumber} • ${deal.customer.firstName} ${deal.customer.lastName}`,
+              title: `${deal.dealNumber} - ${deal.customer.firstName} ${deal.customer.lastName}`,
               subtitle: `Status ${deal.fundingStatus.replaceAll("_", " ")}`,
               href: `/deals/${deal.id}`,
             }))}
@@ -123,7 +124,7 @@ export default async function DashboardPage() {
       <section className="grid gap-3 xl:grid-cols-3">
         <Card className="xl:col-span-2">
           <CardHeader>
-            <CardTitle>Deals In Progress</CardTitle>
+            <CardTitle>Open Deals Requiring Action</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {data.dealsInProgress.length === 0 ? <p className="text-sm text-slate-500">No deals in progress.</p> : null}
@@ -135,7 +136,7 @@ export default async function DashboardPage() {
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-900">
-                    {deal.dealNumber} • {deal.customer.firstName} {deal.customer.lastName}
+                    {deal.dealNumber} - {deal.customer.firstName} {deal.customer.lastName}
                   </p>
                   <p className="text-xs text-slate-500">
                     {deal.vehicle.year} {deal.vehicle.make} {deal.vehicle.model}
@@ -167,3 +168,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+

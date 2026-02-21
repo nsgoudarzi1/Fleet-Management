@@ -136,7 +136,7 @@ export function InventoryListClient({ rows }: { rows: VehicleRow[] }) {
     () => [
       {
         key: "stockNumber",
-        label: "Stock",
+        label: "Stock / VIN",
         render: (row: VehicleRow) => (
           <div>
             <p className="font-medium text-slate-900">{row.stockNumber}</p>
@@ -166,7 +166,7 @@ export function InventoryListClient({ rows }: { rows: VehicleRow[] }) {
       },
       {
         key: "recon",
-        label: "Recon",
+        label: "Recon Tasks",
         render: (row: VehicleRow) => `${row.reconTasks.length} tasks`,
       },
       {
@@ -205,7 +205,7 @@ export function InventoryListClient({ rows }: { rows: VehicleRow[] }) {
           <div className="flex flex-wrap items-center gap-2">
             <Select value={bulkStatus} onValueChange={setBulkStatus}>
               <SelectTrigger className="w-[170px] bg-white">
-                <SelectValue placeholder="Set status..." />
+                <SelectValue placeholder="Set selected to..." />
               </SelectTrigger>
               <SelectContent>
                 {BULK_STATUSES.map((status) => (
@@ -215,17 +215,17 @@ export function InventoryListClient({ rows }: { rows: VehicleRow[] }) {
                 ))}
               </SelectContent>
             </Select>
-            <Button size="sm" onClick={bulkUpdateStatus} disabled={loading}>
+            <Button size="sm" onClick={bulkUpdateStatus} disabled={loading || selectedIds.length === 0}>
               <Wrench className="mr-2 h-4 w-4" />
-              Bulk Update
+              Update Selected
             </Button>
             <Button size="sm" variant="outline" onClick={exportCsv}>
               <Download className="mr-2 h-4 w-4" />
-              Export CSV
+              Export
             </Button>
             <Button size="sm" variant="outline" onClick={() => uploadRef.current?.click()}>
               <FileUp className="mr-2 h-4 w-4" />
-              Import CSV
+              Import
             </Button>
             <CreateVehicleDialog />
           </div>
@@ -234,7 +234,7 @@ export function InventoryListClient({ rows }: { rows: VehicleRow[] }) {
           <>
             <EntityDrawer
               title={`${row.year} ${row.make} ${row.model}`}
-              description={`${row.stockNumber} • ${row.vin}`}
+              description={`${row.stockNumber} - ${row.vin}`}
               trigger={
                 <Button variant="ghost" size="sm">
                   <Eye className="h-4 w-4" />
@@ -333,7 +333,7 @@ function CreateVehicleDialog() {
           </select>
           <div className="sm:col-span-2 flex justify-end">
             <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Create Vehicle"}
+              {saving ? "Saving..." : "Save Vehicle"}
             </Button>
           </div>
         </form>
@@ -341,3 +341,4 @@ function CreateVehicleDialog() {
     </Dialog>
   );
 }
+

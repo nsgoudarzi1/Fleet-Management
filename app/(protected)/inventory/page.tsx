@@ -28,8 +28,9 @@ export default async function InventoryPage({
   return (
     <div>
       <PageHeader
-        title="Inventory & Vehicles"
-        description="Acquisition through delivery with recon visibility."
+        title="Inventory"
+        description="Track each unit from acquisition through recon, listing, sale, and delivery."
+        badges={["Primary Workflow"]}
         actions={
           <Button asChild>
             <Link href="/inventory?create=1">
@@ -40,8 +41,8 @@ export default async function InventoryPage({
         }
       />
       <section className="mb-3 rounded-xl border border-slate-200 bg-white p-3 shadow-xs">
-        <form className="grid gap-2 sm:grid-cols-[1fr_200px_auto]">
-          <Input defaultValue={query} name="q" placeholder="Search by VIN, stock, make, model" />
+        <form className="grid gap-2 sm:grid-cols-[1fr_200px_auto_auto]">
+          <Input defaultValue={query} name="q" placeholder="Search VIN, stock #, make, model" />
           <select
             name="status"
             defaultValue={status ?? ""}
@@ -57,7 +58,10 @@ export default async function InventoryPage({
             <option value="DELIVERED">Delivered</option>
           </select>
           <Button type="submit" variant="outline">
-            Apply
+            Filter Results
+          </Button>
+          <Button asChild type="button" variant="ghost">
+            <Link href="/inventory">Reset</Link>
           </Button>
         </form>
       </section>
@@ -66,7 +70,7 @@ export default async function InventoryPage({
 
       <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
         <p className="text-slate-500">
-          Page {data.page} of {totalPages} • {data.total} total vehicles
+          Page {data.page} of {totalPages} | {data.total} total vehicles
         </p>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline" size="sm" disabled={data.page <= 1}>
@@ -84,3 +88,4 @@ export default async function InventoryPage({
     </div>
   );
 }
+

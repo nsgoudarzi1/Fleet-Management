@@ -6,6 +6,7 @@ import type React from "react";
 import { useMemo, useState } from "react";
 import {
   Building2,
+  Calculator,
   CarFront,
   ClipboardList,
   HandCoins,
@@ -29,7 +30,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Leads: UserSquare2,
   Deals: ClipboardList,
   Funding: HandCoins,
-  Accounting: HandCoins,
+  Accounting: Calculator,
   Settings,
 };
 
@@ -50,8 +51,15 @@ export function SidebarNav() {
 
   const groups = useMemo(
     () => ({
-      Workspace: NAV_ITEMS.filter((item) => ["Dashboard", "Inventory", "Fixed Ops", "Customers", "Leads", "Deals", "Funding", "Accounting"].includes(item.label)),
-      Admin: NAV_ITEMS.filter((item) => item.label === "Settings"),
+      "Core Workflow": NAV_ITEMS.filter((item) =>
+        ["Dashboard", "Inventory", "Deals", "Customers", "Leads", "Funding", "Fixed Ops", "Accounting"].includes(
+          item.label,
+        ),
+      ).sort((a, b) => {
+        const order = ["Dashboard", "Inventory", "Deals", "Customers", "Leads", "Funding", "Fixed Ops", "Accounting"];
+        return order.indexOf(a.label) - order.indexOf(b.label);
+      }),
+      Administration: NAV_ITEMS.filter((item) => item.label === "Settings"),
     }),
     [],
   );
@@ -66,7 +74,7 @@ export function SidebarNav() {
           {!collapsed ? (
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">FleetFlow</p>
-              <p className="text-sm font-semibold text-foreground">Dealer OS</p>
+              <p className="text-sm font-semibold text-foreground">Inventory + Sales</p>
             </div>
           ) : null}
         </div>
@@ -105,6 +113,11 @@ export function SidebarNav() {
         ))}
       </nav>
       <div className="border-t border-border p-2">
+        {!collapsed ? (
+          <p className="px-2 pb-2 text-[11px] text-muted-foreground">
+            Focus: move units from inventory to delivered deals.
+          </p>
+        ) : null}
         <Button
           type="button"
           variant="ghost"

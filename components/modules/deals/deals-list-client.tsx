@@ -46,7 +46,7 @@ export function DealsListClient({ rows }: { rows: DealRow[] }) {
       {
         key: "vehicle",
         label: "Vehicle",
-        render: (row: DealRow) => `${row.vehicle.stockNumber} • ${row.vehicle.year} ${row.vehicle.make} ${row.vehicle.model}`,
+        render: (row: DealRow) => `${row.vehicle.stockNumber} - ${row.vehicle.year} ${row.vehicle.make} ${row.vehicle.model}`,
       },
       {
         key: "stage",
@@ -88,11 +88,11 @@ export function DealsListClient({ rows }: { rows: DealRow[] }) {
               onChange={(event) => setBulkStage(event.target.value)}
               className="h-9 rounded-md border border-slate-300 bg-white px-3 text-sm"
             >
-              <option value="DRAFT">DRAFT</option>
-              <option value="SUBMITTED">SUBMITTED</option>
-              <option value="APPROVED">APPROVED</option>
-              <option value="CONTRACTED">CONTRACTED</option>
-              <option value="DELIVERED">DELIVERED</option>
+              <option value="DRAFT">Draft</option>
+              <option value="SUBMITTED">Submitted</option>
+              <option value="APPROVED">Approved</option>
+              <option value="CONTRACTED">Contracted</option>
+              <option value="DELIVERED">Delivered</option>
             </select>
             <Button
               type="button"
@@ -112,7 +112,7 @@ export function DealsListClient({ rows }: { rows: DealRow[] }) {
                 window.location.reload();
               }}
             >
-              Bulk Stage
+              Update Selected Stage
             </Button>
             <Button asChild size="sm">
               <Link href="/deals/new">
@@ -151,3 +151,4 @@ export function DealsListClient({ rows }: { rows: DealRow[] }) {
     </div>
   );
 }
+
